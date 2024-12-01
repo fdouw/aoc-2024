@@ -1,14 +1,15 @@
-pub fn solve(input: String, _verbose: bool) -> (String, String) {
-    let size = input.lines().count();
+use itertools::Itertools;
 
-    // Split the input in 2 lists
-    let mut a: Vec<u32> = Vec::with_capacity(size);
-    let mut b: Vec<u32> = Vec::with_capacity(size);
-    for line in input.lines() {
-        let mut parts = line.split_ascii_whitespace();
-        a.push(parts.next().unwrap().parse::<u32>().unwrap());
-        b.push(parts.next().unwrap().parse::<u32>().unwrap());
-    }
+pub fn solve(input: String, _verbose: bool) -> (String, String) {
+    let (mut a, mut b): (Vec<u32>, Vec<u32>) = input
+        .lines()
+        .map(|l| {
+            l.split_ascii_whitespace()
+                .map(|s| s.parse::<u32>().unwrap())
+                .collect_tuple()
+                .unwrap()
+        })
+        .unzip();
 
     // Part 1
     a.sort_unstable();
