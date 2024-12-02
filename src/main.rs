@@ -1,4 +1,5 @@
 use crate::solutions::*;
+use std::time::Instant;
 use std::{env, fs, io};
 
 #[allow(dead_code)]
@@ -67,6 +68,7 @@ fn main() {
         }
     }
 
+    let start = Instant::now();
     if day == 0 {
         for d in 1..=25 {
             solve(d, verbose);
@@ -74,4 +76,7 @@ fn main() {
     } else {
         solve(day, verbose);
     }
+    let duration = start.elapsed();
+
+    println!("Total time elapsed is {:?}", duration);
 }
