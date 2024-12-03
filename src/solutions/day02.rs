@@ -19,13 +19,8 @@ pub fn solve(input: String, _verbose: bool) -> (String, String) {
 }
 
 fn test_seq(report: &Vec<u32>) -> bool {
-    let mut inc = true;
-    let mut dec = true;
-    for i in 1..report.len() {
-        inc &= report[i - 1] < report[i] && report[i] - report[i - 1] < 4;
-        dec &= report[i] < report[i - 1] && report[i - 1] - report[i] < 4;
-    }
-    return inc || dec;
+    return report.windows(2).all(|w| w[0] < w[1] && w[1] - w[0] < 4)
+        || report.windows(2).all(|w| w[1] < w[0] && w[0] - w[1] < 4);
 }
 
 fn test_seq_skip(report: &Vec<u32>, k: usize) -> bool {
