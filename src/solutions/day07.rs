@@ -57,12 +57,11 @@ fn apply_ops(v: &Vec<u64>, b: u64, target: u64, concat: bool) -> Vec<u64> {
     return result;
 }
 
-fn concatenate(a: u64, b: u64) -> u64 {
+fn concatenate(mut a: u64, b: u64) -> u64 {
     let mut c = b;
-    let mut n = 0;
     while c > 0 {
-        n += 1;
+        a *= 10;
         c /= 10;
     }
-    return a * 10u64.pow(n) + b;
+    return a + b;
 }
