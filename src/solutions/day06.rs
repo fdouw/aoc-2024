@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use std::io::Read;
 
 pub fn solve(input: String, _verbose: bool) -> (String, String) {
     let mut obstacles: Vec<Vec<bool>> = input
@@ -23,6 +24,7 @@ pub fn solve(input: String, _verbose: bool) -> (String, String) {
         d: Direction::NORTH,
     };
 
+    // Part 1
     let mut pos = start.clone();
     let mut visited = HashSet::new();
     visited.insert((pos.x, pos.y));
@@ -40,35 +42,61 @@ pub fn solve(input: String, _verbose: bool) -> (String, String) {
         visited.insert((next.x, next.y));
         pos = next;
     }
-    let mut obstructions = 0;
+
+    // Part 2
+    let mut obstructions = HashSet::new();
     let mut trace = HashSet::new();
     for block in visited.iter() {
         let mut pos = start.clone();
         trace.clear();
-        trace.insert(pos.clone());
         obstacles[block.1 as usize][block.0 as usize] = true;
         loop {
-            let mut next = pos.step();
-            if !in_area(&next, width, height) {
-                break;
-            }
-            if obstacles[next.y as usize][next.x as usize] {
-                next = pos.rotate_step();
-                if obstacles[next.y as usize][next.x as usize] {
-                    next = pos.rotate180_step()
+            match pos.jump(width as isize, height as isize, &obstacles) {
+                None => break,
+                Some(p) => {
+                    if trace.contains(&p) {
+                        obstructions.insert(block);
+                        break;
+                    } else {
+                        trace.insert(p.clone());
+                        let mut next = p.rotate_step();
+                        if obstacles[next.y as usize][next.x as usize] {
+                            next = p.rotate180_step()
+                        }
+                        pos = next;
+                    }
                 }
             }
-            if trace.contains(&next) {
-                obstructions += 1;
-                break;
-            }
-            trace.insert(next.clone());
-            pos = next;
         }
         obstacles[block.1 as usize][block.0 as usize] = false;
     }
+    // show(&obstacles, &obstructions, &start);
 
-    (visited.len().to_string(), obstructions.to_string())
+    (visited.len().to_string(), obstructions.len().to_string())
+}
+
+#[allow(dead_code)]
+fn show(obstacles: &Vec<Vec<bool>>, obstructions: &HashSet<&(isize, isize)>, pos: &Position) {
+    let obstructs: HashSet<_> = obstructions
+        .iter()
+        .map(|p| (p.0 as usize, p.1 as usize))
+        .collect();
+    let guard = (pos.x as usize, pos.y as usize);
+    for (y, row) in obstacles.iter().enumerate() {
+        for (x, obst) in row.iter().enumerate() {
+            if *obst {
+                print!("#");
+            } else if obstructs.contains(&(x, y)) {
+                print!("O");
+            } else if (x, y) == guard {
+                print!("X");
+            } else {
+                print!(".");
+            }
+        }
+        println!();
+    }
+    let _ = std::io::stdin().read(&mut [0u8]).unwrap();
 }
 
 const DIR: [(isize, isize); 4] = [(0, -1), (1, 0), (0, 1), (-1, 0)];
@@ -98,6 +126,26 @@ impl Position {
             x: self.x + DIR[self.d as usize].0,
             y: self.y + DIR[self.d as usize].1,
             d: self.d,
+        }
+    }
+    fn jump(&self, width: isize, height: isize, obstacles: &Vec<Vec<bool>>) -> Option<Position> {
+        let mut x = self.x;
+        let mut y = self.y;
+        let dx = DIR[self.d as usize].0;
+        let dy = DIR[self.d as usize].1;
+        loop {
+            x += dx;
+            y += dy;
+            if !(0 <= x && x < width && 0 <= y && y < height) {
+                return None;
+            } else if obstacles[y as usize][x as usize] {
+                return Some(Position {
+                    x: x - dx,
+                    y: y - dy,
+                    d: self.d,
+                });
+            }
+            // Keep going
         }
     }
     fn rotate_step(&self) -> Position {
