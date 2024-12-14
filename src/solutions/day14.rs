@@ -1,14 +1,11 @@
-use std::collections::HashSet;
-
 use regex::Regex;
+use std::collections::HashSet;
 
 const ROOM_WIDTH: isize = 101;
 const ROOM_HEIGHT: isize = 103;
 
 const MID_X: isize = 50;
 const MID_Y: isize = 51;
-
-const DIRS: [(isize, isize); 4] = [(0, -1), (1, 0), (0, 1), (-1, 0)];
 
 pub fn solve(input: String, _verbose: bool) -> (String, String) {
     let pattern = Regex::new(r"(?ms)p=(\d+),(\d+) v=(-?\d+),(-?\d+)").unwrap();
@@ -44,9 +41,8 @@ pub fn solve(input: String, _verbose: bool) -> (String, String) {
             )
         })
         .collect();
-    // let mut max_connected = 0;
     let mut part2 = 0;
-    for i in 0..10_000 {
+    for i in 0..ROOM_HEIGHT * ROOM_WIDTH {
         positions.clear();
         // Move bots
         for bot in bots.iter_mut() {
@@ -59,22 +55,12 @@ pub fn solve(input: String, _verbose: bool) -> (String, String) {
             positions.insert((bot.0, bot.1));
         }
         // Naive check if they are forming a connected pattern
-        let connected: usize = bots
-            .iter()
-            .map(|(x, y, _, _)| {
-                DIRS.iter()
-                    .any(|(dx, dy)| positions.contains(&(x + dx, y + dy))) as usize
-            })
-            .sum();
-        // max_connected = max_connected.max(connected);
-        if connected > 300 {
+        if positions.len() == bots.len() {
             // show(&positions);
-            // println!("Found at {}", i + 1);
-            part2 = i + 1; // Plus 1, because we move the bots before checking
+            part2 = i + 1;
             break;
         }
     }
-    // println!("Max connected: {max_connected}");
 
     (part1.to_string(), part2.to_string())
 }
