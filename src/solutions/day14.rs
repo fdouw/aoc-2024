@@ -1,23 +1,28 @@
+use std::collections::HashSet;
+
 use regex::Regex;
 
-const ROOM_WIDTH: i64 = 101;
-const ROOM_HEIGHT: i64 = 103;
+const ROOM_WIDTH: isize = 101;
+const ROOM_HEIGHT: isize = 103;
 
-const MID_X: i64 = 50;
-const MID_Y: i64 = 51;
+const MID_X: isize = 50;
+const MID_Y: isize = 51;
+
+const DIRS: [(isize, isize); 4] = [(0, -1), (1, 0), (0, 1), (-1, 0)];
 
 pub fn solve(input: String, _verbose: bool) -> (String, String) {
     let pattern = Regex::new(r"(?ms)p=(\d+),(\d+) v=(-?\d+),(-?\d+)").unwrap();
 
+    // Part 1
     let mut quadrants = [0, 0, 0, 0];
     pattern
         .captures_iter(&input)
         .map(|c| c.extract())
         .map(|(_, [x, y, vx, vy])| {
             (
-                (x.parse::<i64>().unwrap() + 100 * vx.parse::<i64>().unwrap())
+                (x.parse::<isize>().unwrap() + 100 * vx.parse::<isize>().unwrap())
                     .rem_euclid(ROOM_WIDTH),
-                (y.parse::<i64>().unwrap() + 100 * vy.parse::<i64>().unwrap())
+                (y.parse::<isize>().unwrap() + 100 * vy.parse::<isize>().unwrap())
                     .rem_euclid(ROOM_HEIGHT),
             )
         })
@@ -25,10 +30,71 @@ pub fn solve(input: String, _verbose: bool) -> (String, String) {
         .for_each(|q| quadrants[q] += 1);
     let part1: i64 = quadrants.iter().product();
 
-    (part1.to_string(), String::from("<not yet implemented>"))
+    // Part 2
+    let mut positions = HashSet::new();
+    let mut bots: Vec<(isize, isize, isize, isize)> = pattern
+        .captures_iter(&input)
+        .map(|c| c.extract())
+        .map(|(_, [x, y, vx, vy])| {
+            (
+                x.parse().unwrap(),
+                y.parse().unwrap(),
+                vx.parse().unwrap(),
+                vy.parse().unwrap(),
+            )
+        })
+        .collect();
+    // let mut max_connected = 0;
+    let mut part2 = 0;
+    for i in 0..10_000 {
+        positions.clear();
+        // Move bots
+        for bot in bots.iter_mut() {
+            *bot = (
+                (bot.0 + bot.2).rem_euclid(ROOM_WIDTH),
+                (bot.1 + bot.3).rem_euclid(ROOM_HEIGHT),
+                bot.2,
+                bot.3,
+            );
+            positions.insert((bot.0, bot.1));
+        }
+        // Naive check if they are forming a connected pattern
+        let connected: usize = bots
+            .iter()
+            .map(|(x, y, _, _)| {
+                DIRS.iter()
+                    .any(|(dx, dy)| positions.contains(&(x + dx, y + dy))) as usize
+            })
+            .sum();
+        // max_connected = max_connected.max(connected);
+        if connected > 300 {
+            // show(&positions);
+            // println!("Found at {}", i + 1);
+            part2 = i + 1; // Plus 1, because we move the bots before checking
+            break;
+        }
+    }
+    // println!("Max connected: {max_connected}");
+
+    (part1.to_string(), part2.to_string())
 }
 
-fn quadrant(p: (i64, i64)) -> Option<usize> {
+#[allow(dead_code)]
+fn show(positions: &HashSet<(isize, isize)>) {
+    for y in 0..ROOM_HEIGHT {
+        println!();
+        for x in 0..ROOM_WIDTH {
+            if positions.contains(&(x, y)) {
+                print!("*");
+            } else {
+                print!(".");
+            }
+        }
+    }
+    println!();
+}
+
+fn quadrant(p: (isize, isize)) -> Option<usize> {
     let (x, y) = p;
     if x < MID_X && y < MID_Y {
         Some(0)
@@ -66,9 +132,9 @@ p=9,5 v=-3,-3";
         .map(|c| c.extract())
         .map(|(_, [x, y, vx, vy])| {
             (
-                (x.parse::<i64>().unwrap() + 100 * vx.parse::<i64>().unwrap())
+                (x.parse::<isize>().unwrap() + 100 * vx.parse::<isize>().unwrap())
                     .rem_euclid(ROOM_WIDTH),
-                (y.parse::<i64>().unwrap() + 100 * vy.parse::<i64>().unwrap())
+                (y.parse::<isize>().unwrap() + 100 * vy.parse::<isize>().unwrap())
                     .rem_euclid(ROOM_HEIGHT),
             )
         })
