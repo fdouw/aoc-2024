@@ -5,9 +5,8 @@ const SIZE: u32 = 71; // 7
 const BYTES_FALLING: usize = 1024; // 12
 
 pub fn solve(input: String, _verbose: bool) -> (String, String) {
-    let mut bytes: HashSet<_> = input
+    let bytes_all: Vec<_> = input
         .lines()
-        .take(BYTES_FALLING)
         .map(|l| {
             l.split(",")
                 .map(|s| s.parse().unwrap())
@@ -16,24 +15,26 @@ pub fn solve(input: String, _verbose: bool) -> (String, String) {
         })
         .collect();
 
+    let bytes = bytes_all.iter().take(BYTES_FALLING).collect();
     let part1 = find_path(&bytes).unwrap();
-    let mut part2 = "bah".to_string();
-    for next_byte in input.lines().skip(BYTES_FALLING).map(|l| {
-        l.split(",")
-            .map(|s| s.parse().unwrap())
-            .collect_tuple()
-            .unwrap()
-    }) {
-        bytes.insert(next_byte);
-        if find_path(&bytes).is_none() {
-            part2 = format!("{},{}", next_byte.0, next_byte.1);
-            break;
+
+    let mut lo = BYTES_FALLING + 1;
+    let mut hi = bytes_all.len();
+    while lo < hi {
+        let mid = (lo + hi) / 2;
+        let bytes = bytes_all.iter().take(mid).collect();
+        if has_path(&bytes) {
+            lo = mid + 1;
+        } else {
+            hi = mid;
         }
     }
+    let part2 = format!("{},{}", bytes_all[lo - 1].0, bytes_all[lo - 1].1);
+
     (part1.to_string(), part2)
 }
 
-fn find_path(bytes: &HashSet<(u32, u32)>) -> Option<u32> {
+fn find_path(bytes: &HashSet<&(u32, u32)>) -> Option<u32> {
     let mut history: HashSet<(u32, u32)> = HashSet::new();
     let mut queue = VecDeque::new();
     queue.push_back((0, 0, 0));
@@ -64,6 +65,38 @@ fn find_path(bytes: &HashSet<(u32, u32)>) -> Option<u32> {
         }
     }
     return None;
+}
+
+fn has_path(bytes: &HashSet<&(u32, u32)>) -> bool {
+    let mut history: HashSet<(u32, u32)> = HashSet::new();
+    let mut queue = Vec::new();
+    queue.push((0, 0));
+    while !queue.is_empty() {
+        let (x, y) = queue.pop().unwrap();
+        if x == SIZE - 1 && y == SIZE - 1 {
+            // Finish
+            return true;
+        }
+        if !bytes.contains(&(x, y)) {
+            if 0 < x && !history.contains(&(x - 1, y)) {
+                history.insert((x - 1, y));
+                queue.push((x - 1, y));
+            }
+            if 0 < y && !history.contains(&(x, y - 1)) {
+                history.insert((x, y - 1));
+                queue.push((x, y - 1));
+            }
+            if x + 1 < SIZE && !history.contains(&(x + 1, y)) {
+                history.insert((x + 1, y));
+                queue.push((x + 1, y));
+            }
+            if y + 1 < SIZE && !history.contains(&(x, y + 1)) {
+                history.insert((x, y + 1));
+                queue.push((x, y + 1));
+            }
+        }
+    }
+    return false;
 }
 
 #[allow(dead_code)]
